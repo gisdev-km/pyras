@@ -1030,10 +1030,45 @@ class Controller(object):
         """
         """
 
-    def Output_NodeOutput(self):
+    def Output_NodeOutput(self, riv, rch, n, updn, prof, nVar):
         """
-        """
+        Returns an output value for a given node and profile.
+        
+        Parameters
+        ----------
+        riv : int
+            The river ID number.
+        rch : int
+            The reach ID number.
+        n : int
+            The node ID number.
+        updn: int
+            0 for upstream section, 1 for BR UP, 2 for BR DOWN.
+            All other integers return output for BR UP.  Only 
+            applies to nodes that have an upstream and downstream
+            section, like bridges, culverts and multiple openings.
+            For all other nodes, user can use any long integer
+            number, makes no difference.
+        prof: int
+            The profile ID number.
+        nVar: int
+            The variable ID.
 
+        Returns
+        -------
+        nVar: float
+
+        Notes
+        -----
+        The output value that is returned is for the HEC-RAS variable
+        ID number, nVar. Variables numbers are defined in Appendix E.
+        
+        """
+        rc = self._rc
+        res = rc.Output_NodeOutput(riv, rch, n, updn, prof, nVar)[0] # The function call also returns the nVar + args for some reason
+
+        return res
+		
     def Output_ReachOutput(self):
         """
         """
@@ -1050,11 +1085,47 @@ class Controller(object):
         """
         """
 
-    def OutputDSS_GetStageFlowSA(self):
+    def OutputDSS_GetStageFlowSA(self, StorageArea):
         """
-        """
+        Returns stage and flow for every hydrograph output interval for a 
+        storage area.
+        
+        Parameters
+        ----------
+        StorageArea : string
+            The storage area name. 
 
-    # %% Plan
+        Returns
+        -------
+        nValue: int
+            The number of hydrograph outputs
+        ValueDateTime(): float
+            The array of date/times in Julien format.
+        Stage(): float
+            The array of stage values.
+        Flow(): float
+            The array of flow values.
+        errmsg: str
+            An error message returned if something goes wrong with getting 
+            output.
+
+        Notes
+        -----
+        The output value that is returned is for the HEC-RAS variable
+        ID number, nVar. Variables numbers are defined in Appendix E.
+        
+        """
+        nValue = 0
+        ValueDateTime = None
+        Stage = None
+        Flow = None
+        errmsg = None
+
+        rc = self._rc
+        res = rc.OutputDSS_GetStageFlowSA(StorageArea, nValue, ValueDateTime, Stage, Flow, errmsg)[2:]  #[2:] # First 2 results are not documented.  True/False and Name of Storage Areas
+
+        return res
+
     def Plan_GetFilename(self, planName):
         """
         Given a plan name, returns the plan file, including path.
