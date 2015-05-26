@@ -1,19 +1,284 @@
 """
 """
+import datetime as dt
 import os
 import os.path as osp
 
 
-class Controller(object):
-    """HECRAS Controller vesrsion RAS41"""
+def _fix_dates(dates):
+    """Helper function to convert dates to datetime objects."""
 
-    # %% Compute
+    # Fix dates with epoch
+    init = dt.datetime(1900, 1, 1) - dt.timedelta(2)  # Needed to adjust
+    new_dates = [dt.timedelta(d) + init for d in dates[1:]]
+
+    return new_dates
+
+
+def _create_dir(filepath):
+    """Checks if path is valid, and if dir does not exist it will create it
+    recursively.
+    """
+    # Check relative path to script
+    dirpath = osp.dirname(osp.abspath(filepath))
+    if not osp.isdir(dirpath):
+        # Create directory recursively
+        os.makedirs(dirpath)
+    fullpath = osp.abspath(filepath)
+
+    return fullpath
+
+
+class ControllerDeprecated(object):
+    """Methods present in RAS410 but not in RAS500."""
+
     def Compute_Cancel(self):
-        """
-        """
+        """Cancel running computation."""
         rc = self._rc
         rc.Compute_Cancel()
 
+    def Compute_IsStillComputing(self):
+        """Returns True if a computation is still in execution."""
+        rc = self._rc
+        res = rc.Compute_IsStillComputing()
+        return res
+
+    # %% Get
+    def GetDataLocations_Input(self, PlanTitle):
+        """
+
+        Parameters
+        ----------
+        PlanTitle : str
+            The name of the plan.
+
+        Returns
+        -------
+        LocationDesciptions : list of str
+
+        DSSFiles : list of str
+
+        DSSPathnames : list of str
+        """
+        raise NotImplementedError
+        rc = self._rc
+        errmsg = ''
+        LocationDesciptions = []
+        DSSFiles = []
+        DSSPathnames = []
+        res = rc.GetDataLocations_Input(PlanTitle, LocationDesciptions,
+                                        DSSFiles, DSSPathnames, errmsg)
+
+        return res
+
+    def GetDataLocations_Input_count(self, PlanTitle):
+        """
+
+        Parameters
+        ----------
+        PlanTitle : str
+            The name of the plan.
+
+        Returns
+        -------
+        int
+        """
+        raise NotImplementedError
+        rc = self._rc
+        errmsg = ''
+        res = rc.GetDataLocations_Input_count(PlanTitle, errmsg)
+
+        return res
+
+    def GetDataLocations_Output(self, planTitle):
+        """
+        Gets all stage and flow hydrograh output locations, including their dss
+        file names and dss paths.
+
+        Parameters
+        ----------
+        planTitle : str
+            The name of the plan.
+
+        Returns
+        -------
+        DSSFiles : list of str
+            The list of DSS filenames.
+        DSSPathnames : list of str
+            The list of DSS Pathnames.
+        """
+        raise NotImplementedError
+        rc = self._rc
+        errmsg = ''
+        DSSFiles = []
+        DSSPathnames = []
+        res = rc.Geometry_SetSAArea(planTitle, DSSFiles, DSSPathnames, errmsg)
+
+        return res
+
+    def GetDataLocations_Output_count(self, PlanTitle):
+        """
+
+        Parameters
+        ----------
+        PlanTitle : str
+            The name of the plan.
+
+        Returns
+        -------
+        int
+        """
+        raise NotImplementedError
+        rc = self._rc
+        errmsg = ''
+        res = rc.GetDataLocations_Output_count(PlanTitle, errmsg)
+
+        return res
+
+    def Output_Initialize(self):
+        """
+        """
+        raise NotImplementedError
+
+    # %% Set TODO:
+    def SetDataLocations(self, PlanTitle, count, LocationDesciptions, DSSFiles,
+                         DSSPathnames):
+        """
+        
+        PlanTitle : str
+
+        count : int
+
+        LocationDesciptions : str
+
+        DSSFiles : str
+
+        DSSPathnames : str
+
+        """
+        raise NotImplementedError
+        rc = self._rc
+        errmsg = ''
+        res = rc.SetDataLocations(PlanTitle, count, LocationDesciptions,
+                                  DSSFiles, DSSPathnames, errmsg)
+
+
+class ControllerAdded(object):
+    """Methods present in RAS410 but not in RAS400"""
+
+    def Geometry_GetGML(self, geomfilename):
+        """Returns the GML file txt for the current geometry file.
+
+        Parameters
+        ----------
+        geomfilename : str
+            The name of the geometry file.
+        """
+        raise NotImplementedError
+        rc = self._rc
+        res = rc.Geometry_GetGML(geomfilename)
+        return res
+
+    def OutputDSS_GetStageFlowSA(self, StorageArea):
+        """
+        Returns stage and flow for every hydrograph output interval for a
+        given storage area.
+
+        Parameters
+        ----------
+        StorageArea : string
+            The storage area name.
+
+        Returns
+        -------
+        nValue: int
+            The number of hydrograph outputs
+        ValueDateTime: list of datetime objects
+            The array of date/times in python datetime format.
+        Stage: list of floats
+            The array of stage values.
+        Flow: list of floats
+            The array of flow values.
+        errmsg: str
+            An error message returned if something goes wrong with getting
+            output.
+
+        Notes
+        -----
+        An output file is not needed, since this function reads the DSS file.
+        Therefore, postprocessing is not required, which could save a lot of
+        time, if run time efficiency is required.
+        """
+        rc = self._rc
+        nvalue = None
+        ValueDateTime = None
+        Stage = None
+        Flow = None
+        errmsg = None
+
+        res = rc.OutputDSS_GetStageFlowSA(StorageArea, nvalue, ValueDateTime,
+                                          Stage, Flow, errmsg)
+        success, StorageArea, nvalue, ValueDateTime, Stage, Flow, errmsg = res
+
+        new_dates = _fix_dates(ValueDateTime)
+        return nvalue, new_dates, Stage, Flow, errmsg
+
+    def Output_ComputationLevel_Export(self, filename, WriteFlow=False,
+                                       WriteStage=False, WriteArea=False,
+                                       WriteTopWidth=False):
+        """Exports the computation level output to a comma delimited text file.
+
+        Parameters
+        ----------
+        filename: str
+            The name to give to the new computation level text file.
+        WriteFlow: bool, optional
+            True if you want flow data included in the computation level text
+            file. Otherwise False.
+        WriteStage: bool, optional
+            True if you want stage data included in the computation level text
+            file. Otherwise False.
+        WriteArea: bool, optional
+            True if you want area data included in the computation level text
+            file. Otherwise False.
+        WriteTopWidth: bool, optional
+            True if you want top width data included in the computation level
+            text file. Otherwise False.
+
+        Returns
+        -------
+        errmsg: str
+            An error message returned if somethign goes wrong with getting the
+            count
+
+        Notes
+        -----
+        For this to work, user must have a .hyd## file created, which contains
+        the computation level output in binary form. The .hyd## file is created
+        when the user runs HEC-RAS with the Computation Level Output box
+        checked. Base level data sent to the text file is River, Reach and
+        River Station. Flow, Stage, Area and Top Width are optional output
+        parameters that can be sent.
+
+        *Caution: this method can take a long time to run and can create a very
+        large text file.
+
+        """
+        errmsg = ''
+        rc = self._rc
+        res = rc.Output_ComputationLevel_Export(filename, errmsg, WriteFlow,
+                                                WriteStage, WriteArea,
+                                                WriteTopWidth)
+        (success, filename, errmsg, WriteFlow, WriteStage, WriteArea,
+         WriteTopWidth) = res
+
+        return success
+
+
+class ControllerBase(object):
+    """Base methods in common with version RAS500."""
+
+    # %% Compute
     def Compute_CurrentPlan(self):
         """
         Computes the current plan.
@@ -29,8 +294,8 @@ class Controller(object):
         nmsg = None
         msg = None
         res = rc.Compute_CurrentPlan(nmsg, msg)
-        print(res)
         success, nmsg, msg = res
+
         return success
 
     def Compute_HideComputationWindow(self):
@@ -44,26 +309,14 @@ class Controller(object):
         rc = self._rc
         rc.Compute_HideComputationWindow()
 
-    def Compute_IsStillComputing(self):
-        """
-        Returns True if a computation is still in execution.
-
-        Returns
-        -------
-        bool
-        """
-        rc = self._rc
-        res = rc.Compute_IsStillComputing()
-        return res
-
     def Compute_ShowComputationWindow(self):
         """
         Sets the computation window to be visible during computations.
 
         Notes
         -----
-        This hould be called before Compute_CurrentPlan. Because by default the
-        RAS Controller shows the Computation Window, this is not necessary
+        This should be called before Compute_CurrentPlan. Because by default
+        the RAS Controller shows the Computation Window, this is not necessary
         unless the Computation Window was already hidden in a previous line of
         code.
         """
@@ -194,7 +447,7 @@ class Controller(object):
             The reach name  to add the bridge/culvert to.
         rs : str
             The river station of the new bridge/culvert.
-        block : bool (False)
+        close : bool (False)
             Call Edit_XS and closes it automatically (Python wrapper only)
 
         Notes
@@ -226,7 +479,7 @@ class Controller(object):
             The reach name  to add the inline structure to.
         rs : str
             The river station of the new inline structure.
-        block : bool (False)
+        close : bool (False)
             Call Edit_XS and closes it automatically (Python wrapper only)
 
         Notes
@@ -258,7 +511,7 @@ class Controller(object):
             The reach name  to add the lateral structure to.
         rs : str
             The river station of the new lateral structure.
-        block : bool (False)
+        close : bool (False)
             Call Edit_XS and closes it automatically (Python wrapper only)
 
         Notes
@@ -290,7 +543,7 @@ class Controller(object):
             The reach name  to add the cross section to.
         rs : str
             The river station of the new cross setion.
-        block : bool (False)
+        close : bool (False)
             Call Edit_XS and closes it automatically (Python wrapper only)
 
         Notes
@@ -324,7 +577,7 @@ class Controller(object):
             The reach name of the bridge/culvert to edit.
         rs : str
             The river station of the bridge/culvert to edit.
-        block : bool (False)
+        close : bool (False)
             Call Edit_XS and closes it automatically (Python wrapper only)
 
         Notes
@@ -362,7 +615,7 @@ class Controller(object):
             The reach name of the inline structure to edit.
         rs : str
             The river station of the inline structure to edit.
-        block : bool (False)
+        close : bool (False)
             Call Edit_XS and closes it automatically (Python wrapper only)
 
         Notes
@@ -387,7 +640,7 @@ class Controller(object):
             The reach name of the lateral structure to edit.
         rs : str
             The river station of the lateral structure to edit.
-        block : bool (False)
+        close : bool (False)
             Call Edit_XS and closes it automatically (Python wrapper only)
 
         Notes
@@ -517,7 +770,7 @@ class Controller(object):
             The reach name of the cross section.
         rs : str
             The river station of the cross section.
-        block : bool (False)
+        close : bool (False)
             Call Edit_XS and closes it automatically (Python wrapper only)
 
         Notes
@@ -530,10 +783,20 @@ class Controller(object):
         self._runtime.pause_xs(close)
 
     # %% Export
-    def ExportGIS(self):
+    def ExportGIS(self, filename=None):
         """
         Export HEC-RAS results to an *.sdf export file that can be read into
         GIS using HEC-GeoRAS.
+
+        Parameters
+        ----------
+        filename : str (optional)
+            TODO: This might enhance the experience...
+
+        Returns
+        -------
+        str
+            Location whre the file was generated and stored.
 
         Notes
         -----
@@ -541,10 +804,19 @@ class Controller(object):
         HECRASController uses whatever user inputs (i.e. profiles to export,
         results to export, types of geometric data to export, etc.) have
         already been set in the Editor and only wirtes the *.sdf export file.
+
+        Python: this method returns the location of the file (unlike VBA)
         """
-        raise NotImplementedError
+        suffix = '.RASexport.sdf'
+        path, fname_project = osp.split(self.CurrentProjectFile())
+        fname_project = fname_project.split('.')[0]
+        fname_gis = fname_project + suffix
+        fullpath = osp.join(path, fname_gis)
+
         rc = self._rc
         rc.ExportGIS()
+
+        return fullpath
 
     # %% Geometry
     def Geometry(self):
@@ -607,19 +879,6 @@ class Controller(object):
 
         return result
 
-    def Geometry_GetGML(self, geomfilename):
-        """Returns the GML file txt for the current geometry file.
-
-        Parameters
-        ----------
-        geomfilename : str
-            The name of the geometry file.
-        """
-        raise NotImplementedError
-        rc = self._rc
-        res = rc.Geometry_GetGML(geomfilename)
-        return res
-
     def Geometry_GetNode(self, riv, rch, rs):
         """Returns the node ID of a selected node.
 
@@ -676,10 +935,12 @@ class Controller(object):
             river/reach.
         """
         rc = self._rc
+
         geo = self.Geometry()
         nRS = geo.nNode(riv, rch)
         rs = (float('nan'),)*(nRS + 1)
         NodeType = (float('nan'),)*(nRS + 1)
+
         res = rc.Geometry_GetNodes(riv, rch, nRS, rs, NodeType)
         riv, rch, nRS, rs, NodeType = res
 
@@ -841,99 +1102,6 @@ class Controller(object):
 
         return res
 
-    # %% Get
-
-    def GetDataLocations_Input(self, PlanTitle):
-        """
-
-        Parameters
-        ----------
-        PlanTitle : str
-            The name of the plan.
-
-        Returns
-        -------
-        LocationDesciptions : list of str
-
-        DSSFiles : list of str
-
-        DSSPathnames : list of str
-        """
-        raise NotImplementedError
-        rc = self._rc
-        errmsg = ''
-        LocationDesciptions = []
-        DSSFiles = []
-        DSSPathnames = []
-        res = rc.GetDataLocations_Input(PlanTitle, LocationDesciptions,
-                                        DSSFiles, DSSPathnames, errmsg)
-
-        return res
-
-    def GetDataLocations_Input_count(self, PlanTitle):
-        """
-
-        Parameters
-        ----------
-        PlanTitle : str
-            The name of the plan.
-
-        Returns
-        -------
-        int
-        """
-        raise NotImplementedError
-        rc = self._rc
-        errmsg = ''
-        res = rc.GetDataLocations_Input_count(PlanTitle, errmsg)
-
-        return res
-
-    def GetDataLocations_Output(self, planTitle):
-        """
-        Gets all stage and flow hydrograh output locations, including their dss
-        file names and dss paths.
-
-        Parameters
-        ----------
-        planTitle : str
-            The name of the plan.
-
-        Returns
-        -------
-        DSSFiles : list of str
-            The list of DSS filenames.
-        DSSPathnames : list of str
-            The list of DSS Pathnames.
-        """
-        raise NotImplementedError
-        rc = self._rc
-        errmsg = ''
-        DSSFiles = []
-        DSSPathnames = []
-        res = rc.Geometry_SetSAArea(planTitle, DSSFiles, DSSPathnames, errmsg)
-
-        return res
-
-    def GetDataLocations_Output_count(self, PlanTitle):
-        """
-
-        Parameters
-        ----------
-        PlanTitle : str
-            The name of the plan.
-
-        Returns
-        -------
-        int
-        """
-        raise NotImplementedError
-        rc = self._rc
-        errmsg = ''
-        res = rc.GetDataLocations_Output_count(PlanTitle, errmsg)
-
-        return res
-
     # %% Versions
     def GetRASVersion(self):
         """
@@ -977,11 +1145,6 @@ class Controller(object):
         rc.Map_Add(Filename)
 
     # %% Output
-    def Output_ComputationLevel_Export(self):
-        """
-        """
-        raise NotImplementedError
-
     def Output_GetNode(self, riv, reach, rs):
         """
         Returns the Node ID, for a given River Station.
@@ -1006,81 +1169,394 @@ class Controller(object):
         the output file, so a *.O## file is requires (i.e. run computations
         first).
         """
-        raise NotImplementedError
         rc = self._rc
         res = rc.Output_GetNode(riv, reach, rs)
+        node_id, riv, reach, rs = res
 
-        return res
+        return node_id
 
-    def Output_GetNodes(self):
+    def Output_GetNodes(self, riv, reach):
+        """Gets a tuple of nodes and node types for a given river and reach.
+
+        Parameters
+        ----------
+        riv : int
+            The river ID number.
+        rch : int
+            Tge reach ID number.
+
+        Returns
+        -------
+        nRS : int
+            The number of nodes on the selected river/reach.
+        rs : str
+            The array of River Stations representing nodes on the selected
+            river/reach
+        NodeType: str
+            The array of node types on the selected river/reach
+
+        Notes
+        -----
+        Works like the Geometry_GetNodes method, only this function read from
+        the output file, so a *.O## file is requires (i.e. run computations
+        first). A node can be any geometric component with a River Station
+        (i.e. cross section, bridge/culvert, inline structurem lateral
+        structure, multiple opening).
         """
-        """
-        raise NotImplementedError
+        rc = self._rc
+        nRS = None
+        rs = None
+        NodeType = None
+        res = rc.Output_GetNodes(riv, reach, nRS, rs, NodeType)
+        riv, reach, nRS, rs, NodeType = res
+
+        return nRS, rs, NodeType
 
     def Output_GetProfiles(self):
-        """
-        """
-        raise NotImplementedError
+        """Gets the profile names for the current plan.
 
-    def Output_GetReach(self):
-        """
-        """
-        raise NotImplementedError
+        Returns
+        -------
+        nProfile : int
+            The rive ID.
+        ProfileName : str
+            A list of profile names.
 
-    def Output_GetReaches(self):
+        Notes
+        -----
+        This function reads from the output file, so a *.O## file is required
+        (i.e. run computations first).
         """
-        """
-        raise NotImplementedError
+        rc = self._rc
+        nProfile = None
+        ProfileName = None
+        res = rc.Output_GetProfiles(nProfile, ProfileName)
+        nProfile, ProfileName = res
 
-    def Output_GetRiver(self):
+        return nProfile, ProfileName
+
+    def Output_GetReach(self, riv, reach):
+        """Returns the Reach ID for a given Reach name.
+
+        Parameters
+        ----------
+        riv : int
+            The river ID.
+        reach : str
+            The name of the reach.
+
+        Returns
+        -------
+        reach_id : int
+
+        Notes
+        -----
+        This function reads from the output file, so a *.O## file is required
+        (i.e. run computations first).
         """
+        rc = self._rc
+        res = rc.Output_GetReach(riv, reach)
+        reach_id, riv, reach = res
+        return reach_id
+
+    def Output_GetReaches(self, riv):
+        """Returns a list of reachs for a given river.
+
+        Parameters
+        ----------
+        riv : int
+            The river ID.
+
+        Returns
+        -------
+        nReach : int
+            The number of reaches on the selected river.
+        reach : list of str
+            The list of reaches on the selected river.
+
+        Notes
+        -----
+        This function reads from the output file, so a *.O## file is required
+        (i.e. run computations first).
         """
-        raise NotImplementedError
+        rc = self._rc
+        nReach = None
+        reach = None
+        res = rc.Output_GetReaches(riv, nReach, reach)
+        riv, nReach, reach = res
+        return nReach, reach
+
+    def Output_GetRiver(self, river):
+        """Returns the river ID for a given river name.
+
+        Parameters
+        ----------
+        river : str
+            River name.
+
+        Returns
+        -------
+        river_id : int
+            The river ID.
+
+        Notes
+        -----
+        This function reads from the output file, so a *.O## file is required
+        (i.e. run computations first).
+        """
+        rc = self._rc
+        res = rc.Output_GetRiver(river)
+        river_id, river = res
+        return river_id
 
     def Output_GetRivers(self):
-        """
-        """
-        raise NotImplementedError
+        """Gets a list of rives fr the crrent HEC-RAS project.
 
-    def Output_Initialize(self):
-        """
-        """
-        raise NotImplementedError
+        Returns
+        -------
+        nRiver : int
+            The number of rivers in the HEC-RAS project.
+        river : list of str
+            The list of river names in the HEC-RAS project.
 
-    def Output_NodeOutput(self):
+        Notes
+        -----
+        Works like Geometry_GetReaches subroutine, only this function reads
+        reads from the output file, so a *.O## file is required (i.e. run
+        computations first).
         """
-        """
-        raise NotImplementedError
+        rc = self._rc
+        nRiver = None
+        river = None
+        res = rc.Output_GetRivers(nRiver, river)
+        nRiver, river = res
+        return nRiver, river
 
-    def Output_ReachOutput(self):
+    def Output_NodeOutput(self, riv, rch, n, updn, prof, nVar):
         """
+        Returns an output value for a given node and profile.
+
+        Parameters
+        ----------
+        riv : int
+            The river ID number.
+        rch : int
+            The reach ID number.
+        n : int
+            The node ID number.
+        updn: int
+            0 for upstream section, 1 for BR UP, 2 for BR DOWN. All other
+            integers return output for BR UP. Only applies to nodes that have
+            an upstream and downstream section, like bridges, culverts and
+            multiple openings. For all other nodes, user can use any long
+            integer number, makes no difference.
+        prof: int
+            The profile ID number.
+        nVar: int
+            The variable ID.
         """
-        raise NotImplementedError
+        rc = self._rc
+        res = rc.Output_NodeOutput(riv, rch, n, updn, prof, nVar)
+        output, riv, rch, n, updn, prof, nVar = res
+
+        return output
+
+    def Output_ReachOutput(self, riv, rch, prof, nVar):
+        """Gets a list of river stations, channel distances, and output
+        variables.
+
+        Parameters
+        ----------
+        riv : int
+            The river ID number.
+        rch : int
+            The reach ID number
+        porf : int
+            The profile ID number.
+        nVar : int
+            The variable ID.
+
+        Returns
+        -------
+        nRS : int
+            The number of river stations in the reach.
+        rs : list of str
+            The list of river stations.
+        ChannelDist : list of floats
+            The list of channel distances.
+        value : list of floats
+            The list of values for the given variable ID.
+
+        Notes
+        -----
+        The output values that are returned are for the HEC-RAS variable ID
+        number nVar. Variable numbers are defined in the ras_constants module.
+
+        Caution: the rs list only returns cross sections, not other nodes like
+        BR, IS, LS, etc. The 'Output_NodeOutput method's n (Node id number)
+        argument is based on a count of all river stations (Inlcuding BR, IS,
+        LS, etc.), so 'Output_ReachOutput and ' Output_NodeOutput' are not
+        compatible with each other.
+
+        Another caution: Output_ReachOutput returns a list of cross sections
+        that are in reverse order of the typical convention of listing the
+        most upstream cross section first. Output_ReachOutput assigns the
+        downstream-most cross section index 1.
+        """
+        rc = self._rc
+        nRS = None
+        rs = None
+        ChannelDist = None
+        value = None
+        res = rc.Output_ReachOutput(riv, rch, prof, nVar, nRS, rs, ChannelDist,
+                                    value)
+        riv, rch, prof, nVar, nRS, rs, ChannelDist, value = res
+
+        return nRS, rs, ChannelDist, value
 
     def Output_Variables(self):
-        """
-        """
-        raise NotImplementedError
+        """Get a list of HEC-RAS output variable names  and descriptions.
 
-    def Output_VelDist(self):
-        """
-        """
-        raise NotImplementedError
+        Returns
+        -------
+        nVar : int
+            The number of HEC-RAS variables (**not** the variable ID!)
+        VarName : list of str
+            The list of variable names
+        VarDesc : list of str
+            The list of variable descriptions.
 
-    def OutputDSS_GetStageFlow(self):
+        Notes
+        -----
+        The variable ID numbers are what are used for 'nVar' in
+        Output_NodeOutput and Output_ReachOutput methods. Variables id can be
+        accessed by calling the constants defined in the ras_constants module.
         """
-        """
-        raise NotImplementedError
+        rc = self._rc
+        nVar = None
+        VarName = None
+        VarDesc = None
+        res = rc.Output_Variables(nVar, VarName, VarDesc)
+        nVar, VarName, VarDesc = res
+        ids = list(range(1, len(VarName)+1, 1))
 
-    def OutputDSS_GetStageFlowSA(self):
+        return nVar, VarName, VarDesc
+
+    def Output_VelDist(self, riv, rch, n, updn, prof):
+        """Gets information about velocity distribution.
+
+        Parameters
+        ----------
+        riv : int
+            The river ID number.
+        rch : int
+            The reach ID number.
+        n : int
+            The node ID number.
+        updn : int
+            0 for upstream section, 1 for BR UP, 2 for BR DOWN. All other
+            integers return output for BR UP. Only applies to nodes that have
+            an upstream and downstream section, like bridges, culverts and
+            multiple openings. For all other nodes, user can use any long
+            integer number, makes no difference.
+        prof : int
+            The profile ID number.
+
+        Returns
+        -------
+        nv : int
+            The number of vertical slices.
+        LeftSta : list of floats
+            The list of left station values for each slice
+        RightSta : list of floats
+            The list of tight station values for each slice.
+        ConvPerc : list of floats
+            The list of percent of total conveyance for each slice.
+        Area : list of floats
+            The list of flow area values for each slice.
+        WP : list of floats
+            The list of wetted perimeter values for each slice.
+        Flow : list of floats
+            The list of flow values for each slice.
+        HydrDepth : list of floats
+            The list of hydraulic depth values for each slice.
+        Velocity : list of floats
+            The list of velocity values for each slice.
+
+        Notes
+        -----
+        Flow distribution muts be set as an option in the HEC-RAS model for any
+        cross sections that will be called by this subroutine. If 'Plot
+        Velocity Distribution' is turned on then this method will return data
+        for all slices defined in the Flow Distribution Locations Editos. If
+        'Plot Velocity Distribution'is turned off, this method will return data
+        for the left overbank, main channedl and right overbank.
         """
+        rc = self._rc
+        nv = None
+        LeftSta = None
+        RightSta = None
+        ConvPerc = None
+        Area = None
+        WP = None
+        Flow = None
+        HydrDepth = None
+        Velocity = None
+        res = rc.Output_VelDist(riv, rch, n, updn, prof, nv, LeftSta, RightSta,
+                                ConvPerc, Area, WP, Flow, HydrDepth, Velocity)
+        (riv, rch, n, updn, prof, nv, LeftSta, RightSta, ConvPerc, Area, WP,
+         Flow, HydrDepth, Velocity) = res
+
+        return (nv, LeftSta, RightSta, ConvPerc, Area, WP, Flow, HydrDepth,
+                Velocity)
+
+    def OutputDSS_GetStageFlow(self, riv, rch, rs):
+        """Return stage and flow for every hydrograph output interval.
+
+        Parameters
+        ----------
+        riv : str
+            The river name.
+        rch : str
+            The reach name.
+        rs : str
+            The river station.
+
+        Returns
+        -------
+        nvalue : int
+            The number of hydrograph outputs.
+        ValueDateTime : list of datetime
+            The list of datetime objects.
+        Stage : list of floats
+            The list of stage values.
+        Flow : list of floats
+            The list of flow values.
+        errmsg : str
+            Error message in case ssomething goes wrong with getting output.
+
+        Notes
+        -----
+        An output file is not needed, since this function reads the DSS file.
+        Therefore, postprocessing is not required, which could save a lot of
+        time, if run efficiency is required.
         """
-        raise NotImplementedError
+        rc = self._rc
+        nvalue = None
+        ValueDateTime = None
+        Stage = None
+        Flow = None
+        errmsg = None
+        res = rc.OutputDSS_GetStageFlow(riv, rch, rs, nvalue, ValueDateTime,
+                                        Stage, Flow, errmsg)
+        success, riv, rch, rs, nvalue, ValueDateTime, Stage, Flow, errmsg = res
+        new_dates = _fix_dates(ValueDateTime)
+
+        return nvalue, new_dates, Stage, Flow, errmsg
 
     # %% Plan
     def Plan_GetFilename(self, planName):
-        """
-        Given a plan name, returns the plan file, including path.
+        """Given a plan name, returns the plan file, including path.
 
         Parameters
         ----------
@@ -1092,15 +1568,13 @@ class Controller(object):
         str
             Plan file and path
         """
-        raise NotImplementedError
         rc = self._rc
         res = rc.Plan_GetFilename(planName)
-        return res
+        path, planName = res
+        return path
 
-    def Plan_Names(self, PlanCount, PlanNames,
-                   IncludeOnlyPlansInBaseDirectory):
-        """
-        Gets a list of all the Plan Names in the active HEC-RAS project.
+    def Plan_Names(self, IncludeOnlyPlansInBaseDirectory):
+        """Gets a list of all the Plan Names in the active HEC-RAS project.
 
         Parameters
         ----------
@@ -1113,11 +1587,14 @@ class Controller(object):
         PlanNames : list of str
             The list of plan names.
         """
-        raise NotImplementedError
         rc = self._rc
-        res = rc.Plan_GetFilename(PlanCount, PlanNames,
-                                  IncludeOnlyPlansInBaseDirectory)
-        return res
+        PlanCount = None
+        PlanNames = None
+        res = rc.Plan_Names(PlanCount, PlanNames,
+                            IncludeOnlyPlansInBaseDirectory)
+        PlanCount, PlanNames, IncludeOnlyPlansInBaseDirectory = res
+
+        return PlanCount, PlanNames
 
     def Plan_Reports(self):
         """
@@ -1129,12 +1606,20 @@ class Controller(object):
             The number of plan reports.
         ReportNames : list of str
             The list of plan reports.
+
+        Notes
+        -----
+        Plan Reports are the 'Cross Section Plot', 'Profile Plot, 'XYZ Plot',
+        'Cross Section Table', and 'Profile Table'. Does not print out the
+        reports, only list the names of the available projects.
         """
-        raise NotImplementedError
         rc = self._rc
-        ReportCount, ReportNames = [], []
-        res = rc.Plan_GetFilename(ReportCount, ReportNames)
-        return res
+        ReportCount = None
+        ReportNames = None
+        res = rc.Plan_Reports(ReportCount, ReportNames)
+        ReportCount, ReportNames = res
+
+        return ReportCount, ReportNames
 
     def Plan_SetCurrent(self, PlanTitleToSet):
         """
@@ -1150,11 +1635,10 @@ class Controller(object):
         ------
         bool
         """
-        raise NotImplementedError
         rc = self._rc
-        res = rc.Plan_SetCurrent(PlanTitleToSet)
+        success, PlanTitleToSet = rc.Plan_SetCurrent(PlanTitleToSet)
 
-        return res
+        return success
 
     def PlanOutput_IsCurrent(self, PlanTitleToCheck, ShowMessageList):
         """
@@ -1183,12 +1667,13 @@ class Controller(object):
         continue with run-time. Otherwise the RAS "Current Plan"window opens
         and closes quickly.
         """
-        raise NotImplementedError
         rc = self._rc
-        errmsg = ''
-        res = rc.Plan_SetCurrent(PlanTitleToCheck, ShowMessageList, errmsg)
+        errmsg = None
+        res = rc.PlanOutput_IsCurrent(PlanTitleToCheck, ShowMessageList,
+                                      errmsg)
+        success, PlanTitleToCheck, ShowMessageList, errmsg = res
 
-        return res
+        return errmsg
 
     def PlanOutput_SetCurrent(self, PlanTitleToSet):
         """
@@ -1206,14 +1691,14 @@ class Controller(object):
         Notes
         -----
         This only works if an output file exists for the selected plan. Does
-        not change the current plan, nly changes the output file that is
+        not change the current plan, only changes the output file that is
         displayed in the output tables and plots.
         """
-        raise NotImplementedError
         rc = self._rc
         res = rc.Plan_SetCurrent(PlanTitleToSet)
+        success, PlanTitleToSet = res
 
-        return res
+        return success
 
     def PlanOutput_SetMultiple(self, nPlanTitleToSet, PlanTitleToSet_0,
                                ShowMessageList):
@@ -1243,7 +1728,12 @@ class Controller(object):
         The method plan_Naes returns a 1-based array so it must be converted to
         0-based, prior to calling PlanOutput_SetMultiple.
         """
-        raise NotImplementedError
+        rc = self._rc
+        res = rc.PlanOutput_SetMultiple(nPlanTitleToSet, PlanTitleToSet_0,
+                                        ShowMessageList)
+        nplans, nPlanTitleToSet, PlanTitleToSet_0, ShowMessageList = res
+
+        return nplans
 
     # %% Plot
     def PlotHydraulicTables(self, river, reach, rs):
@@ -1260,9 +1750,9 @@ class Controller(object):
         rs : str
             The river station.
         """
-        raise NotImplementedError
         rc = self._rc
         rc.PlotHydraulicTables(river, reach, rs)
+        self._runtime.pause_text('View Hydraulic Property Tables')
 
     def PlotPF(self, river, reach):
         """
@@ -1279,9 +1769,9 @@ class Controller(object):
         -----
         Must have an output file for this to work.
         """
-        raise NotImplementedError
         rc = self._rc
         rc.PlotPF(river, reach)
+        self._runtime.pause_text('Profile Plot')
 
     def PlotPFGeneral(self, river, reach):
         """
@@ -1298,11 +1788,11 @@ class Controller(object):
         -----
         Must have an output file for this to work.
         """
-        raise NotImplementedError
         rc = self._rc
         rc.PlotPFGeneral(river, reach)
+        self._runtime.pause_text('General Profile Plot')
 
-    def PlotRatingCurve(self, river, reach):
+    def PlotRatingCurve(self, river, reach, rs):
         """
         Displays the Rating Curve for a given River, Reach and River Station.
 
@@ -1319,9 +1809,9 @@ class Controller(object):
         -----
         Must have an output file for this to work.
         """
-        raise NotImplementedError
         rc = self._rc
-        rc.PlotRatingCurve(river, reach)
+        rc.PlotRatingCurve(river, reach, rs)
+        self._runtime.pause_text('Rating Curve')
 
     def PlotStageFlow(self, river, reach, rs):
         """
@@ -1341,9 +1831,9 @@ class Controller(object):
         -----
         For unsteady plans only. Must have an output file for this to work.
         """
-        raise NotImplementedError
         rc = self._rc
         rc.PlotStageFlow(river, reach, rs)
+        self._runtime.pause_text('Stage and Flow Hydrographs')
 
     def PlotStageFlow_SA(self, SAName):
         """
@@ -1356,9 +1846,9 @@ class Controller(object):
         therefore the storage area name has to be hard coded, read from a file,
         or retrieved interactively during run-time.
         """
-        raise NotImplementedError
         rc = self._rc
         rc.PlotStageFlow_SA(SAName)
+        self._runtime.pause_text('Stage and Flow Hydrographs')
 
     def PlotXS(self, river, reach, rs):
         """
@@ -1374,9 +1864,9 @@ class Controller(object):
         rs : str
             The river station.
         """
-        raise NotImplementedError
         rc = self._rc
         rc.PlotXS(river, reach, rs)
+        self._runtime.pause_text('Cross Section')
 
     def PlotXYZ(self, river, reach):
         """
@@ -1389,9 +1879,9 @@ class Controller(object):
         reach : str
             The reach name.
         """
-        raise NotImplementedError
         rc = self._rc
         rc.PlotXYZ(river, reach)
+        self._runtime.pause_text('X-Y-Z Perspective Plot')
 
     # %% Project
     def Project_Current(self):
@@ -1412,18 +1902,9 @@ class Controller(object):
         Filename : str
             Full path of the new HEC-RAS project.
         """
-        raise NotImplementedError
         rc = self._rc
-
-        # Check relative path to script
-        dirpath = osp.dirname(osp.abspath(Filename))
-        if osp.isdir(dirpath):
-            # Create directory recursively
-            os.makedirs(dirpath)
-        else:
-            fullpath = osp.abspath(Filename)
-
-        rc.Project_Open(title, fullpath)
+        fullpath = _create_dir(Filename)
+        rc.Project_New(title, fullpath)
 
     def Project_Open(self, ProjectFileName):
         """
@@ -1461,9 +1942,8 @@ class Controller(object):
         newProjectName : str
             Path and file name of the HEC-RAS project to save as.
         """
-        raise NotImplementedError
         rc = self._rc
-        fullpath = osp.abspath(newProjectName)
+        fullpath = _create_dir(newProjectName)
         rc.Project_SaveAs(fullpath)
 
     # %% Schematic
@@ -1613,27 +2093,6 @@ class Controller(object):
 
         return res
 
-    # %% Set TODO:
-    def SetDataLocations(self, PlanTitle, count, LocationDesciptions, DSSFiles,
-                         DSSPathnames):
-        """
-        PlanTitle : str
-
-        count : int
-
-        LocationDesciptions : str
-
-        DSSFiles : str
-
-        DSSPathnames : str
-
-        """
-        raise NotImplementedError
-        rc = self._rc
-        errmsg = ''
-        res = rc.SetDataLocations(PlanTitle, count, LocationDesciptions,
-                                  DSSFiles, DSSPathnames, errmsg)
-
     # %% Show
     def ShowRas(self):
         """
@@ -1661,9 +2120,8 @@ class Controller(object):
 
         Notes
         -----
-        Fr steady flow plans only.
+        For steady flow plans only.
         """
-        raise NotImplementedError
         rc = self._rc
         rc.SteadyFlow_ClearFlowData()
 
@@ -1688,9 +2146,9 @@ class Controller(object):
         For steady flow plans only. The WSElev list contains fixed water
         surface elevations for each profile in the active plan's flow file.
         """
-        raise NotImplementedError
         rc = self._rc
-        rc.SteadyFlow_FixedWSBoundary(river, reach, Downstream, WSElev)
+        ws = [0] + list(WSElev)
+        rc.SteadyFlow_FixedWSBoundary(river, reach, Downstream, ws)
 
     def SteadyFlow_nProfile(self):
         """
@@ -1702,7 +2160,7 @@ class Controller(object):
         For steady flow plans only.
         """
         rc = self._rc
-        res = rc.SteadyFlow_nProfile()
+        res = rc.SteadyFlow_nProfile
         return res
 
     def SteadyFlow_SetFlow(self, river, reach, rs, Flow):
@@ -1727,9 +2185,9 @@ class Controller(object):
         the flow table, it will added. Need to first determine the number of
         profiles to set up the item count in the Flow array.
         """
-        raise NotImplementedError
         rc = self._rc
-        res = rc.SteadyFlow_SetFlow(river, reach, rs, Flow)
+        flow = [0] + list(Flow)
+        rc.SteadyFlow_SetFlow(river, reach, rs, flow)
 
     # %% Table
     def TablePF(self, river, reach):
@@ -1743,9 +2201,9 @@ class Controller(object):
         reach : str
             The reach name.
         """
-        raise NotImplementedError
         rc = self._rc
-        res = rc.TablePF(river, reach)
+        rc.TablePF(river, reach)
+        self._runtime.pause_text('Profile Output Table')
 
     def TableXS(self, river, reach, rs):
         """
@@ -1761,9 +2219,9 @@ class Controller(object):
         rs : str
             The river station.
         """
-        raise NotImplementedError
         rc = self._rc
-        res = rc.TableXS(river, reach, rs)
+        rc.TableXS(river, reach, rs)
+        self._runtime.pause_text('Cross Section Output')
 
     # %% Unsteady
     def UnsteadyFlow_SetGateOpening_Constant(self, river, reach, rs, GateName,
@@ -1799,13 +2257,11 @@ class Controller(object):
         return errmsg
 
 
-class ControllerDeprecated(object):
-    """ """
+class Controller(ControllerBase, ControllerAdded, ControllerDeprecated):
     pass
 
 
 class RASEvents:
-    """Not working"""
     def HECRASController_ComputeProgressBar(self, Progress):
         """
         Repeatedly returns a single value between 0 and 1, indicating the
@@ -1824,9 +2280,8 @@ class RASEvents:
         called repeatedly once Compute_CurrentPlan is called and thorugh the
         duration of the HEC-RAS Computations.
 
-        Python: this events do not work with win32com
+        Python: this event does not work with win32com
         """
-        print(Progress)
         return Progress
 
     def ComputeProgressMessage(self, msg):
@@ -1846,7 +2301,6 @@ class RASEvents:
         is called repeatedly once Compute_CurrentPlan is called and thorugh the
         duration of the HEC-RAS Computations.
 
-        Python: this events do not work with win32com
+        Python: this event does not work with win32com
         """
-        print(msg)
         return msg

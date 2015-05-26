@@ -16,6 +16,13 @@
 PyRAS - Python for River AnalysiS
 =================================
 
+DISCLAIMER
+----------
+This module is under development and is considered a beta-release (not suitable for production use yet). 
+The API will most likelly change during this development process with the help of any feedback received from
+potential beta testers.
+
+
 Description
 -----------
 
@@ -23,17 +30,14 @@ A Python suite for working with river models.
 
 Goals
 -----
-Offer an abstraction layer for the definition of river models and tools to call controller
-of different hydraulic models.
-
-**Models supported (Partial support soon to be completed):**
+Offer an abstraction layer for the definition of river models and tools to operate on this models
+or when possible calling the model engine (controller). So far the library offers:
 
 * **HEC-RAS**: Wrapper for the COM interface of the HEC-RAS controller. (windows only)
 
+For the upcoming developments this library will define a pythonic interface to different objects
+found in the HEC-RAS river model (sections, structures, nodes etc).
 
-**Coming soon:**
-
-* **HEC-RAS API**: High level parser API of HEC-RAS input files. (Cross platform)
 
 Requirements
 ------------
@@ -46,17 +50,16 @@ Current support includes version 4.1.0 and 5.0.0.
 
 Installation
 ------------
-The following would be the eventual way of installing (not working right now): 
 
 **The easy way:**
 
-1. Install the anaconda distribution 
+1. Install the anaconda distribution (comes with PyWin32 preinstalled)
 
 2. On the command line type:
 
 .. code-block:: python
 
-	pip install pyras
+	pip install pyras --upgrade
 
 **The hard way:**
 
@@ -68,8 +71,7 @@ The following would be the eventual way of installing (not working right now):
 
 .. code-block:: python
 
-	pip install pyras
-
+	pip install pyras --upgrade
 	
 License
 -------

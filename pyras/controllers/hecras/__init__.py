@@ -9,14 +9,8 @@ import win32api
 import win32con
 
 
-def get_supported_versions():
+def kill_ras():
     """ """
-    return ['RAS500', 'RAS41']  # Order gives the priority
-
-
-def kill_all():
-    """ """
-    import os
     import subprocess
 
     ras_process_string = 'ras.exe'
@@ -33,8 +27,9 @@ def kill_all():
 
     for pid in pids:
         try:
+            # FIXME:
             os.system('TASKKILL /PID {0} /F >nul'.format(pid))
-        except Exception, e:
+        except Exception as e:
             print(e)
 
 
@@ -167,31 +162,30 @@ def _get_registered_typelibs(match='HEC River Analysis System'):
             num = num + 1
     finally:
         win32api.RegCloseKey(key)
-    result = sorted(result)
     return result
 
 
+class HECRASImportError(Exception):
+    def __init__(self, message=''):
+        msg = '"HEC River Analysis System" type library not found. ' \
+              'Please install HEC-RAS'
+        if message:
+            msg = message
+
+        # Call the base class constructor with the parameters it needs
+        super(HECRASImportError, self).__init__(msg)
+
+
 # %%
-kill_all()
+#kill_ras()
 __available_versions__ = get_available_versions()
 
+from .hecrascontroller import RAS500
+from .hecrascontroller import RAS41
 
-if len(__available_versions__) > 0:
-    for ras_version in get_supported_versions():
-        if ras_version in __available_versions__:
-            os.environ['RAS_CONTROLLER_VERSION'] = ras_version
-            break
-
-    from .hecrascontroller import HECRASController
-
-    # Cleaning the namespace
-    globals().pop('hecrascontroller')
-    globals().pop('hecrasgeometry')
-    globals().pop('win32api')
-    globals().pop('win32con')
-    globals().pop('runtime')
-    globals().pop('os')
-else:
-    error = '"HEC River Analysis System" type library not found. ' \
-            'Please install HEC-RAS'
-    raise Exception(error)
+# Cleaning the namespace
+globals().pop('hecrascontroller')
+globals().pop('hecrasgeometry')
+globals().pop('win32api')
+globals().pop('win32con')
+globals().pop('runtime')

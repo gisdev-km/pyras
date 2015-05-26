@@ -2,40 +2,33 @@
 """
 
 """
-from pyras.controllers.hecras import HECRASController, kill_all
+import datetime as dt 
+import time
 
-project = r'temp_examples\Steady Examples\BEAVCREK.prj'
+from pyras.controllers import RAS500, RAS41, kill_ras
+from pyras.controllers.hecras import ras_constants as RC
+
+#project = r'temp_examples\Steady Examples\BEAVCREK.prj'
 #project = r'temp_examples\Unsteady Examples\NavigationDam\ROCK_TEST.prj'
 
-
-rc = HECRASController('RAS41')
-#rc = HECRASController('RAS500')
-
-rc.ShowRas()
-
-# %% Project
-rc.Project_Open(project)
-
-res = rc.Project_Current()
-print('Project_Current:')
-print(res)
-print('')
-
-#rc.Compute_HideComputationWindow()
-#rc.Compute_ShowComputationWindow()
-#res = rc.Compute_CurrentPlan()
-#print('Compute_CurrentPlan:')
-#print(res)
-#print('')
-
-#res = rc.Compute_Cancel()
-#print('\nCompute_Cancel', res)
-
-#res = rc.Compute_Complete()
-#print('Compute_Complete')
-#print(res)
-#print('')
-
+#project = r'D:\Users\penac1\Dropbox (Personal)\it\repos\git\pyras\temp\Unsteady Examples\BEAV_STO_PROBLEM.prj'
+#project = r'D:\Users\penac1\Dropbox (Personal)\it\repos\git\pyras\temp_examples\Unsteady Examples\BaldLatWeir.prj'
+#project = r'D:\Users\penac1\Dropbox (Personal)\it\repos\git\pyras\temp_examples\Steady Examples\BEAVCREK.prj'
+#
+##with RAS500(project) as rc:
+##    res = rc.Project_Current()
+##    print(rc.version())
+##    print('Project_Current:')
+##    print(res)
+##    print('')
+##    for m in sorted(dir(rc)):
+##        print(m)
+##    rc.pause(10)
+#
+#rc = RAS41()
+#rc.ShowRas()
+#rc.Project_Open(project)
+#
 # %% Curent (Controller Class)
 #res = rc.CurrentGeomFile()
 #print('CurrentGeomFile')
@@ -213,6 +206,10 @@ print('')
 #print('')
 
 # %% Geometry (Controller Class)
+#res = rc.ExportGIS()
+#print('ExportGIS')
+#print(res)
+#print('')
 
 # Not tested
 #res = rc.Geometery_GISImport(self, title, Filename)
@@ -270,7 +267,7 @@ print('')
 #print('')
 
 # %% Get (Controller Class)
-res = rc.GetRASVersion()
+#res = rc.GetRASVersion()
 #print('GetRASVersion')
 #print(res)
 #print('')
@@ -279,6 +276,194 @@ res = rc.GetRASVersion()
 #print('HECRASVersion', res)
 #print(res)
 #print('')
+
+# %% Output 
+#river = 1
+#reach = 1
+#n = 1
+#station = '135068.7'
+
+#res = rc.Output_ComputationLevel_Export('export_test2.txt')
+#print('Output_ComputationLevel_Export', res)
+#print('')
+#
+#res = rc.Output_GetNode(river, reach, station)
+#print('Output_GetNode', res)
+#print('')
+#
+#res = rc.Output_GetNodes(river, reach)
+#print('Output_GetNodes', res)
+#print('')
+
+#res = rc.Output_GetProfiles()
+#print('Output_GetProfiles', res)
+#print('')
+
+#reach = 'Loc Hav'
+#res = rc.Output_GetReach(river, reach)
+#print('Output_GetReach', res)
+#print('')
+
+#res = rc.Output_GetReaches(river)
+#print('Output_GetReaches', res)
+#print('')
+
+#river_name = 'Bald Eagle'
+#res = rc.Output_GetRiver(river_name)
+#print('Output_GetRiver', res)
+#print('')
+
+#res = rc.Output_GetRivers()
+#print('Output_GetRivers', res)
+#print('')
+
+#updn = 0
+#prof = 1
+#nVar = RC.WS_ELEVATION
+#res = rc.Output_NodeOutput(river, reach, n, updn, prof, nVar)
+#print('Output_NodeOutput', res)
+#print('')
+
+#riv_id = 1
+#rch = 1
+#prof = 1
+#nVar = RC.PROFILE
+#res = rc.Output_ReachOutput(riv_id, rch, prof, nVar)
+#print('Output_ReachOutput', res)
+#print('')
+
+#res = rc.Output_Variables()
+#print('Output_Variables', res)
+#print('')
+
+#riv = 1
+#rch = 1
+#n = 1
+#updn = 1
+#prof = 1
+#res = rc.Output_VelDist(riv, rch, n, updn, prof)
+#print('Output_Output_VelDist', res)
+#print('')
+
+#riv = 'Bald Eagle'
+#rch = 'Loc Hav'
+#rs = '138154.4'
+#res = rc.OutputDSS_GetStageFlow(riv, rch, rs)
+#print('OutputDSS_GetStageFlow', res)
+#print('')
+
+#res = rc.OutputDSS_GetStageFlowSA('Lower SA')
+#print('OutputDSS_GetStageFlowSA', res)
+#print('')
+
+# %% Plan
+#plan = 'Unsteady with Bridges, Dam, later weirs/'
+#res = rc.Plan_GetFilename(plan)
+#print('Plan_GetFilename', res)
+#print('')
+
+#res = rc.Plan_Names(False)
+#print('Plan_Names', res)
+#print('')
+
+#res = rc.Plan_Reports()
+#print('Plan_Reports', res)
+#print('')
+
+#plan = 'Unsteady with Bridges, Dam, later weirs/'
+#res = rc.Plan_SetCurrent(plan)
+#print('Plan_SetCurrent', res)
+#print('')
+
+#plan = 'Unsteady with Bridges, Dam, later weirs/'
+#show_message = False
+#res = rc.PlanOutput_IsCurrent(plan, show_message)
+#print('PlanOutput_IsCurrent', res)
+#print('')
+
+#plan = 'Unsteady with Bridges, Dam, later weirs/'
+#res = rc.PlanOutput_SetCurrent(plan)
+#print('PlanOutput_SetCurrent', res)
+#print('')
+
+#plan = 'Unsteady with Bridges, Dam, later weirs/'
+#res = rc.PlanOutput_SetMultiple(1, [plan], False)
+#print('PlanOutput_SetMultiple', res)
+#print('')
+
+# %% Plot
+
+riv = 'Bald Eagle'
+rch = 'Loc Hav'
+rs = '138154.4'
+sa = ' Upper SA'
+#rc.PlotHydraulicTables('Beaver Creek', 'Kentwood', '5.99')
+#print('PlotHydraulicTables')
+#print('')
+
+#rc.PlotPF('Bald Eagle', 'Loc Hav')
+#print('PlotPF')
+#print('')
+
+#rc.PlotPFGeneral('Bald Eagle', 'Loc Hav')
+#print('PlotPFGeneral')
+#print('')
+
+#rc.PlotRatingCurve(riv, rch, rs)
+#print('PlotRatingCurve')
+#print('')
+
+#rc.PlotStageFlow(riv, rch, rs)
+#print('PlotStageFlow')
+#print('')
+
+#rc.PlotStageFlow_SA(sa)
+#print('PlotStageFlow_SA')
+#print('')
+
+#rc.PlotXS(riv, rch, rs)
+#print('PlotXS')
+#print('')
+
+#rc.PlotXYZ(riv, rch)
+#print('PlotXYZ')
+#print('')
+
+# %% Project (Controller Class)
+
+#res = rc.Project_Current()
+#print('Project_Current:')
+#print(res)
+#print('')
+
+#title = 'Test' 
+#path = r'd:\test\file.prj' 
+#rc.Project_New(title, path)
+#print('Project_New:')
+#print('')
+
+#path = r'd:\test1\copy.prj'
+#rc.Project_SaveAs(path)
+#print('Project_SaveAs:')
+#print('')
+
+
+
+#rc.Compute_HideComputationWindow()
+#rc.Compute_ShowComputationWindow()
+#res = rc.Compute_CurrentPlan()
+#print('Compute_CurrentPlan:')
+#print(res)
+#print('')
+
+#res = rc.Compute_Cancel()
+#print('\nCompute_Cancel', res)
+
+#res = rc.Compute_Complete()
+#print('Compute_Complete')
+#print(res)
+#print('')
+
 
 # %% Schematic (Controller Class)
 #res = rc.Schematic_ReachCount()
@@ -311,5 +496,51 @@ res = rc.GetRASVersion()
 #print(res)
 #print('')
 
+# %% Steady
+#project = r'D:\Users\penac1\Dropbox (Personal)\it\repos\git\pyras\temp_examples\Steady Examples\BEAVCREK.prj'
+#rc = RAS500()
+#rc.ShowRas()
+#rc.Project_Open(project)
+
+#res = rc.SteadyFlow_ClearFlowData()
+#print('SteadyFlow_ClearFlowData')
+
+#river = 'Beaver Creek'
+#reach = 'Kentwood' 
+#downstream = True
+#ws = [210,211, 215]
+#res = rc.SteadyFlow_FixedWSBoundary(river, reach, downstream , ws)
+#print('SteadyFlow_FixedWSBoundary')
+
+#res = rc.SteadyFlow_nProfile()
+#print('SteadyFlow_nProfile', res)
+
+#river = 'Beaver Creek'
+#reach = 'Kentwood' 
+#rs = '5.99'
+#flow = [5001, 10001, 14001]
+#res = rc.SteadyFlow_SetFlow(river, reach, rs, flow)
+#print('SteadyFlow_SetFlow', res)
+
+# %% Table
+project = r'D:\Users\penac1\Dropbox (Personal)\it\repos\git\pyras\temp_examples\Steady Examples\BEAVCREK.prj'
+rc = RAS500()
+rc.ShowRas()
+rc.Project_Open(project)
+
+#river = 'Beaver Creek'
+#reach = 'Kentwood' 
+#rc.TablePF(river, reach)
+#print('TablePF')
+
+river = 'Beaver Creek'
+reach = 'Kentwood'
+rs = '5.99'
+rc.TableXS(river, reach, rs)
+print('TableXS')
+
+
+
+time.sleep(3)
 rc.close()
-kill_all()
+kill_ras()
